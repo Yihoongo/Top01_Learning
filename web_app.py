@@ -1,45 +1,55 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# 1. 网页基础设置
-st.set_page_config(page_title="全栈销量大屏", layout="wide")
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS'] # 解决Mac中文显示
+# 1. 基础配置
+st.set_page_config(page_title="万能数据分析助手", layout="wide")
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 
-st.title("🚀 全栈工程师的数据指挥中心")
-st.markdown("---")
+st.title("🛠️ Yihoon 的万能数据分析助手")
+st.markdown("上传任意 Excel 或 CSV 文件，瞬间获取可视化报告")
 
-# 2. 侧边栏：交互控件
-st.sidebar.header("筛选条件")
-# 自动从数据库里捞出所有城市名，做成下拉菜单
-conn = sqlite3.connect('learning.db')
-city_list = pd.read_sql("SELECT DISTINCT city FROM orders", conn)['city'].tolist()
-selected_city = st.sidebar.selectbox("请选择要分析的城市", city_list)
+# 2. 侧边栏：文件上传插件
+st.sidebar.header("数据导入")
+uploaded_file = st.sidebar.file_uploader("选择你的办公表格", type=['csv', 'xlsx'])
 
-# 3. 核心数据逻辑
-sql = f'''
-SELECT o.category, SUM(o.amount) as total
-FROM orders o
-JOIN users u ON o.user_id = u.user_id
-WHERE o.city = '{selected_city}'
-GROUP BY o.category
-'''
+if uploaded_file is not None:
+    # 3. 自动识别格式并读取
+    try:
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
+        
+        st.success("✅ 文件上传成功！")
 
-df = pd.read_sql(sql, conn)
-conn.close()
+        # 4. 数据概览
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.subheader("数据统计摘要")
+            st.write(df.describe()) # 自动算出平均值、最大最小值等
+        
+        with col2:
+            st.subheader("原始数据预览")
+            st.dataframe(df.head(10)) # 只看前10行
 
-# 4. 网页布局：分两栏展示
-col1, col2 = st.columns(2)
+        # 5. 动态图表（全栈黑科技：让用户自己选画什么图）
+        st.markdown("---")
+        st.subheader("📈 自定义可视化分析")
+        
+        all_columns = df.columns.tolist()
+        x_axis = st.selectbox("请选择横坐标 (X轴)", all_columns)
+        y_axis = st.selectbox("请选择纵坐标 (Y轴)", all_columns)
+        
+        if st.button("生成分析图表"):
+            fig, ax = plt.subplots(figsize=(10, 4))
+            # 自动根据数据画柱状图
+            df.groupby(x_axis)[y_axis].sum().plot(kind='bar', ax=ax, color='#4A90E2')
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
-with col1:
-    st.subheader(f"📊 {selected_city} 销量明细")
-    st.dataframe(df, use_container_width=True) # 展示漂亮的数据表格
+    except Exception as e:
+        st.error(f"解析文件出错：{e}")
 
-with col2:
-    st.subheader("📈 品类占比图")
-    fig, ax = plt.subplots()
-    ax.pie(df['total'], labels=df['category'], autopct='%1.1f%%', startangle=140)
-    st.pyplot(fig) # 把图表“发射”到网页上
-
-st.success(f"当前展示的是 {selected_city} 的实时业务数据")
+else:
+    st.info("💡 请在左侧上传一个表格文件（例如 sales.csv）来开始你的分析。")
