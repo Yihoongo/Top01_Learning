@@ -54,11 +54,11 @@ if uploaded_file is not None:
         if chart_type == "3D柱状风格":
             # barmode="group", color_discrete_sequence 都是为了好看
             fig = px.bar(plot_data, x=x_axis, y=y_axis, color=y_axis, 
-                         color_continuous_scale='Viridis',
-                         text_auto='.2s', title=f"{x_axis} vs {y_axis} 分析")
+                        color_continuous_scale='Viridis',
+                        text_auto='.2s', title=f"{x_axis} vs {y_axis} 分析")
         elif chart_type == "平滑折线图":
             fig = px.line(plot_data, x=x_axis, y=y_axis, markers=True, 
-                          line_shape="spline", render_mode="svg")
+                        line_shape="spline", render_mode="svg"）
         else:
             fig = px.area(plot_data, x=x_axis, y=y_axis, color_discrete_sequence=['#FF4B4B'])
 
