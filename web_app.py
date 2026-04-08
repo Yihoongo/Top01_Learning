@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px  # <--- 就是这一行，新加入的“VIP嘉宾”
 
 # 1. 基础配置
-st.set_page_config(page_title="Yihoon 的全栈分析大屏", layout="wide")
+st.set_page_config(page_title="Milk 的万能数据分析助手", layout="wide")
 
 st.title("🚀 Milk 的万能数据分析助手 (Pro版)")
 st.markdown("上传表格，开启交互式可视化体验")
@@ -75,4 +75,4 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f"分析出错啦：{e}")
 else:
-    st.info("👋 欢迎！请在左侧侧边栏上传一个表格文件开始体验。")
+    st.info("👋 欢迎Milk ! 请在左侧侧边栏上传一个表格文件开始体验。")
