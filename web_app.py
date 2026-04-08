@@ -58,7 +58,7 @@ if uploaded_file is not None:
                         text_auto='.2s', title=f"{x_axis} vs {y_axis} 分析")
         elif chart_type == "平滑折线图":
             fig = px.line(plot_data, x=x_axis, y=y_axis, markers=True, 
-                        line_shape="spline", render_mode="svg"）
+                        line_shape="spline", render_mode="svg") # <--- 确保这里是英文括号
         else:
             fig = px.area(plot_data, x=x_axis, y=y_axis, color_discrete_sequence=['#FF4B4B'])
 
