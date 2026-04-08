@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px  # <--- 就是这一行，新加入的“VIP嘉宾”
 
 # 1. 基础配置
-st.set_page_config(page_title="万能数据分析助手", layout="wide")
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
+st.set_page_config(page_title="Yihoon 的全栈分析大屏", layout="wide")
 
-st.title("🛠️ Yihoon 的万能数据分析助手")
-st.markdown("上传任意 Excel 或 CSV 文件，瞬间获取可视化报告")
+st.title("🚀 Yihoon 的万能数据分析助手 (Pro版)")
+st.markdown("上传表格，开启交互式可视化体验")
 
 # 2. 侧边栏：文件导入
-st.sidebar.header("数据导入")
-uploaded_file = st.sidebar.file_uploader("选择你的办公表格", type=['csv', 'xlsx'])
+st.sidebar.header("📥 数据中心")
+uploaded_file = st.sidebar.file_uploader("拖入你的 sales.csv 或 Excel", type=['csv', 'xlsx'])
 
 if uploaded_file is not None:
     try:
@@ -21,59 +20,59 @@ if uploaded_file is not None:
         else:
             df = pd.read_excel(uploaded_file)
         
-        st.success("✅ 文件上传成功！")
+        st.success("🎉 数据加载成功！")
 
-        # 4. 数据概览
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.subheader("数据统计摘要")
-            st.write(df.describe())
-        with col2:
-            st.subheader("原始数据预览")
-            st.dataframe(df.head(10))
-
-        # --- 这里开始是新加的【视觉实验室】部分 ---
-        st.markdown("---")
-        st.subheader("📊 自定义可视化分析")
+        # 4. 核心指标卡片 (增加一点高级感)
+        st.subheader("📌 核心指标预览")
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("数据总行数", len(df))
+        with col_m2:
+            numeric_cols = df.select_dtypes(include=['number']).columns
+            if len(numeric_cols) > 0:
+                st.metric("平均数值", round(df[numeric_cols[0]].mean(), 2))
         
-        # 自动识别列名（全栈防呆设计）
+        st.divider()
+
+        # 5. 可视化实验室
+        st.subheader("📊 动态交互分析")
+        
         all_columns = df.columns.tolist()
-        numeric_columns = df.select_dtypes(include=['number']).columns.tolist()
+        num_columns = df.select_dtypes(include=['number']).columns.tolist()
 
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
-            x_axis = st.selectbox("请选择横坐标 (X轴)", all_columns)
+            x_axis = st.selectbox("横坐标 (X轴)", all_columns)
         with c2:
-            y_axis = st.selectbox("请选择纵坐标 (Y轴/数字列)", numeric_columns)
+            y_axis = st.selectbox("纵坐标 (Y轴)", num_columns)
+        with c3:
+            chart_type = st.selectbox("图表样式", ["3D柱状风格", "平滑折线图", "炫彩面积图"])
 
-        # 🎨 视觉实验室控件
-        st.markdown("##### 🎨 视觉实验室")
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            chart_type = st.selectbox("选择图表样式", ["柱状图", "折线图", "面积图"])
-        with col_b:
-            theme_color = st.color_picker("挑选一个主题色", "#4A90E2")
-        with col_c:
-            show_data = st.checkbox("显示原始数值表格")
+        # 6. 使用 Plotly 进行高级绘图
+        plot_data = df.groupby(x_axis)[y_axis].sum().reset_index()
 
-        if st.button("🚀 立即渲染专业报告"):
-            fig, ax = plt.subplots(figsize=(10, 4))
-            plot_data = df.groupby(x_axis)[y_axis].sum()
-            
-            if chart_type == "柱状图":
-                plot_data.plot(kind='bar', ax=ax, color=theme_color)
-            elif chart_type == "折线图":
-                plot_data.plot(kind='line', ax=ax, color=theme_color, marker='o')
-            elif chart_type == "面积图":
-                plot_data.plot(kind='area', ax=ax, color=theme_color, alpha=0.5)
-            
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-            
-            if show_data:
-                st.table(plot_data)
+        if chart_type == "3D柱状风格":
+            # barmode="group", color_discrete_sequence 都是为了好看
+            fig = px.bar(plot_data, x=x_axis, y=y_axis, color=y_axis, 
+                         color_continuous_scale='Viridis',
+                         text_auto='.2s', title=f"{x_axis} vs {y_axis} 分析")
+        elif chart_type == "平滑折线图":
+            fig = px.line(plot_data, x=x_axis, y=y_axis, markers=True, 
+                          line_shape="spline", render_mode="svg")
+        else:
+            fig = px.area(plot_data, x=x_axis, y=y_axis, color_discrete_sequence=['#FF4B4B'])
+
+        # 设置 Plotly 图表的主题和布局
+        fig.update_layout(hovermode="x unified", template="plotly_white")
+        
+        # 将图表显示在网页上
+        st.plotly_chart(fig, width="stretch")
+
+        # 7. 底层数据查看
+        with st.expander("查看原始数据明细"):
+            st.dataframe(df, width="stretch")
 
     except Exception as e:
-        st.error(f"解析文件出错：{e}")
+        st.error(f"分析出错啦：{e}")
 else:
-    st.info("💡 请在左侧上传一个表格文件（例如 sales.csv）来开始。")
+    st.info("👋 欢迎！请在左侧侧边栏上传一个表格文件开始体验。")
