@@ -19,6 +19,8 @@ if uploaded_file is not None:
             df = pd.read_csv(uploaded_file)
         else:
             df = pd.read_excel(uploaded_file)
+            # 读取数据后，立即删掉包含 "Unnamed" 的列
+            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         
         st.success("🎉 数据加载成功！")
 
@@ -49,7 +51,7 @@ if uploaded_file is not None:
             chart_type = st.selectbox("图表样式", ["3D柱状风格", "平滑折线图", "炫彩面积图"])
 
         # 6. 使用 Plotly 进行高级绘图
-        plot_data = df.groupby(x_axis)[y_axis].sum().reset_index()
+        plot_data = df.groupby(x_axis, as_index=False)[y_axis].sum()  # 【核心修改 2】：使用 as_index=False，不再需要后面的 .reset_index()
 
         if chart_type == "3D柱状风格":
             # barmode="group", color_discrete_sequence 都是为了好看
